@@ -1,84 +1,151 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Home - Welcome</title>
+  <title>PDF Access</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
     body {
-      margin: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to right, #f0f4f8, #d9e2ec);
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #74ebd5, #acb6e5);
+      height: 100vh;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
-      padding: 40px;
+      position: relative;
     }
 
-    header {
-      width: 100%;
-      text-align: center;
-      padding: 20px;
-      background: #2f80ed;
+    .logout-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: #ff4d4d;
       color: white;
-      font-size: 2em;
-      font-weight: bold;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    .content {
-      background: white;
-      max-width: 700px;
-      width: 100%;
-      border-radius: 10px;
-      padding: 30px;
-      margin-top: 30px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    }
-
-    .content h2 {
-      color: #333;
-      margin-bottom: 20px;
-    }
-
-    .pdf-links a {
-      display: block;
-      padding: 12px;
-      margin: 10px 0;
-      background: #f1f5f9;
-      border: 1px solid #d0d7de;
+      border: none;
+      padding: 10px 18px;
+      font-size: 14px;
       border-radius: 6px;
-      color: #0366d6;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      z-index: 999;
+    }
+
+    .logout-button:hover {
+      background-color: #e60000;
+    }
+
+    .container {
+      background: #fff;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin: 10px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #pdf {
+      margin-top: 20px;
+      display: none;
+    }
+
+    #pdf a {
+      display: inline-block;
       text-decoration: none;
-      transition: background 0.3s;
+      background-color: #007BFF;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
     }
 
-    .pdf-links a:hover {
-      background: #e2e8f0;
-    }
-
-    footer {
-      margin-top: 40px;
-      color: #555;
-      font-size: 0.9em;
+    #pdf a:hover {
+      background-color: #0056b3;
     }
   </style>
 </head>
 <body>
-  <header>
-    Welcome to Your Dashboard
-  </header>
+  <button id="logout" class="logout-button">Logout</button>
 
-  <div class="content">
-    <h2>📄 Your Available PDF Files:</h2>
-    <div class="pdf-links">
-      <!-- Replace these with your actual PDF share links -->
-      <a href="https://drive.google.com/drive/folders/1130nQOpDiy_viQRMYak6GWpDj1RSwNz1?usp=sharing" target="_blank">📘 Document 1</a>
+  <div class="container">
+    <h2>Welcome, <span id="name"></span></h2>
+    <button id="rzp-button1">Pay ₹1 to Access PDF</button>
+    <div id="pdf">
+      <a href="https://drive.google.com/drive/folders/1130nQOpDiy_viQRMYak6GWpDj1RSwNz1?usp=sharing" target="_blank">
+        📘 Open PDF Folder
+      </a>
     </div>
   </div>
 
-  <footer>
-    &copy; 2025 Ramya's Portal. All rights reserved.
-  </footer>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const name = sessionStorage.getItem('userName') || "Guest";
+      const email = sessionStorage.getItem('userEmail');
+
+      document.getElementById('name').innerText = name;
+
+      if (email && localStorage.getItem(`paymentDone-${email}`) === 'true') {
+        document.getElementById("pdf").style.display = "block";
+        document.getElementById("rzp-button1").style.display = "none";
+      }
+
+      var options = {
+        "key": "rzp_live_Gpg4HFhud2YdiI",
+        "amount": "100",
+        "currency": "INR",
+        "name": "Your Company",
+        "description": "PDF Access",
+        "handler": function (response) {
+          alert("Payment successful! Payment ID: " + response.razorpay_payment_id);
+          if (email) {
+            localStorage.setItem(`paymentDone-${email}`, 'true');
+          }
+          document.getElementById("pdf").style.display = "block";
+          document.getElementById("rzp-button1").style.display = "none";
+        },
+        "prefill": {
+          "name": name,
+          "email": email || "customer@example.com",
+          "contact": "9999999999"
+        },
+        "theme": {
+          "color": "#3399cc"
+        }
+      };
+
+      var rzp1 = new Razorpay(options);
+      document.getElementById('rzp-button1').onclick = function (e) {
+        rzp1.open();
+        e.preventDefault();
+      };
+
+      document.getElementById('logout').onclick = function () {
+        sessionStorage.clear();
+        window.location.href = 'index.html';
+      };
+    });
+  </script>
 </body>
 </html>
